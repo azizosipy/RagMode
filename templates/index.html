@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Upload Section -->
+    <div class="glass rounded-xl shadow-lg p-8 fade-in hover-scale">
+        <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6">Charger un document PDF</h2>
+        <div class="space-y-6">
+            <div class="flex items-center justify-center w-full">
+                <label for="pdf-upload" class="flex flex-col items-center justify-center w-full h-56 border-2 border-dashed border-primary-300/50 rounded-xl cursor-pointer bg-white/30 hover:bg-white/50 transition-all duration-300 hover:border-primary-400 hover:scale-[1.02] group">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <div class="relative">
+                            <svg class="w-16 h-16 text-primary-400 group-hover:text-primary-500 transition-colors animate-float" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <div class="absolute inset-0 bg-primary-400/20 blur-xl rounded-full transform -translate-y-1/2 animate-pulse-slow"></div>
+                        </div>
+                        <p class="mt-4 text-sm text-gray-600"><span class="font-semibold">Cliquez pour charger</span> ou glissez-déposez</p>
+                        <p class="text-xs text-gray-500 mt-2">PDF (MAX. 10MB)</p>
+                    </div>
+                    <input id="pdf-upload" type="file" class="hidden" accept=".pdf" />
+                </label>
+            </div>
+            <div id="upload-status" class="hidden">
+                <div class="flex items-center justify-center space-x-3 bg-white/80 rounded-lg p-4">
+                    <div class="animate-spin rounded-full h-5 w-5 border-2 border-primary-600 border-t-transparent"></div>
+                    <span class="text-sm text-gray-700 animate-dots font-medium">Chargement en cours</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents List -->
+    <div class="glass rounded-xl shadow-lg p-8 fade-in" style="animation-delay: 0.1s">
+        <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6">Documents chargés</h2>
+        <div id="docs-list" class="space-y-4">
+            {% if docs_metadata %}
+                {% for doc in docs_metadata %}
+                <div class="gradient-border p-[1px] slide-in" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+                    <div class="flex items-center justify-between p-4 bg-white rounded-lg hover-scale">
+                        <div class="flex items-center space-x-4">
+                            <div class="relative">
+                                <svg class="w-8 h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <div class="absolute inset-0 bg-primary-400/20 blur-md rounded-full"></div>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">{{ doc.filename }}</p>
+                                <p class="text-sm text-gray-500">{{ doc.chunks }} segments • Ajouté le {{ doc.date_added[:10] }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-8">
+                    <p class="text-gray-500">Aucun document chargé</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Chat Section -->
+    <div class="glass rounded-xl shadow-lg p-8 fade-in" style="animation-delay: 0.2s">
+        <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6">Poser une question</h2>
+        <div class="space-y-6">
+            <div id="chat-messages" class="space-y-4 max-h-[500px] overflow-y-auto mb-6 pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <!-- Messages will be inserted here -->
+            </div>
+            <div id="thinking" class="hidden">
+                <div class="flex justify-start">
+                    <div class="max-w-[80%] p-4 glass-dark text-white rounded-xl">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-blue-400 animate-pulse-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            <span class="text-blue-100 animate-dots font-medium">Je réfléchis</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex space-x-4">
+                <input type="text" id="question-input" 
+                    class="flex-1 rounded-xl border-0 bg-white/80 backdrop-blur-sm shadow-sm focus:ring-2 focus:ring-primary-500 transition-all duration-300 placeholder-gray-400"
+                    placeholder="Posez votre question ici...">
+                <button id="send-button" 
+                    class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-medium">
+                    Envoyer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadInput = document.getElementById('pdf-upload');
+    const uploadStatus = document.getElementById('upload-status');
+    const docsList = document.getElementById('docs-list');
+    const questionInput = document.getElementById('question-input');
+    const sendButton = document.getElementById('send-button');
+    const chatMessages = document.getElementById('chat-messages');
+    const thinking = document.getElementById('thinking');
+
+    // Upload handling
+    uploadInput.addEventListener('change', async function(e) {
+        if (!e.target.files.length) return;
+        
+        const file = e.target.files[0];
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Le fichier est trop volumineux. Maximum 10MB.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        uploadStatus.classList.remove('hidden');
+        
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert(data.error || 'Erreur lors du chargement');
+            }
+        } catch (error) {
+            alert('Erreur lors du chargement');
+        } finally {
+            uploadStatus.classList.add('hidden');
+            uploadInput.value = '';
+        }
+    });
+
+    // Chat handling
+    function addMessage(content, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} fade-in`;
+        
+        const messageBubble = document.createElement('div');
+        messageBubble.className = `max-w-[80%] p-4 rounded-xl ${
+            isUser ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white' : 'glass'
+        } hover-scale`;
+        messageBubble.textContent = content;
+        
+        messageDiv.appendChild(messageBubble);
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendQuestion() {
+        const question = questionInput.value.trim();
+        if (!question) return;
+
+        addMessage(question, true);
+        questionInput.value = '';
+        questionInput.disabled = true;
+        sendButton.disabled = true;
+        thinking.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question })
+            });
+
+            const data = await response.json();
+            thinking.classList.add('hidden');
+            
+            if (response.ok) {
+                addMessage(data.answer);
+            } else {
+                addMessage('Désolé, une erreur est survenue.');
+            }
+        } catch (error) {
+            thinking.classList.add('hidden');
+            addMessage('Désolé, une erreur est survenue.');
+        } finally {
+            questionInput.disabled = false;
+            sendButton.disabled = false;
+            questionInput.focus();
+        }
+    }
+
+    sendButton.addEventListener('click', sendQuestion);
+    questionInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendQuestion();
+        }
+    });
+});
+</script>
+{% endblock %} 
